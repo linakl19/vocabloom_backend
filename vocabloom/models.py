@@ -1,15 +1,15 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
-# Create your models here.
-class User(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=254, unique=True)
-    password = models.CharField(max_length=128)
+# class User(models.Model):
+#     first_name = models.CharField(max_length=100)
+#     last_name = models.CharField(max_length=100)
+#     email = models.EmailField(max_length=254, unique=True)
+#     password = models.CharField(max_length=128)
 
-    def __str__(self):
-        return self.first_name
+#     def __str__(self):
+#         return self.first_name
 
 
 class Tag(models.Model):
