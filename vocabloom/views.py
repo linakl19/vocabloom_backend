@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from .models import Tag
-from .serializers import TagSerializer
+from .serializers import TagSerializer, UserRegistrationSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -96,6 +96,16 @@ def logout(request):
 @permission_classes([IsAuthenticated])
 def is_authenticated(request):
     return Response({'authenticated': True})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    serializer = UserRegistrationSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors)
 
 
 @api_view(['GET'])
