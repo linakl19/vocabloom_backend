@@ -80,6 +80,18 @@ class CustomRefreshTokenView(TokenRefreshView):
             return Response({'refreshed': False})
 
 
+@api_view(['POST'])
+def logout(request):
+    try:
+        res = Response()
+        res.data = {'success': True}
+        res.delete_cookie('access_token', path='/', samesite='None')
+        res.delete_cookie('refresh_token', path='/', samesite='None')
+        return res
+    except:
+        return Response({'refreshed': False})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_tags(request):
