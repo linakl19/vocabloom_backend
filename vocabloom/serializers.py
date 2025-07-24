@@ -3,16 +3,16 @@ from django.contrib.auth.models import User
 from .models import Tag, Word, Meaning, Definition
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'email', 'first_name', 'last_name']
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['id', 'email', 'first_name', 'last_name']
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['id', 'user', 'name']
+        fields = ['id', 'name']
 
 
 class DefinitionSerializer(serializers.ModelSerializer):
@@ -36,7 +36,6 @@ class WordSerializer(serializers.ModelSerializer):
         model = Word
         fields = [
             'id',
-            'user',
             'tag',
             'word',
             'phonetic',
