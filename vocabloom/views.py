@@ -6,6 +6,7 @@ from .serializers import TagSerializer, UserRegistrationSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework import status
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -108,11 +109,44 @@ def register_user(request):
     return Response(serializer.errors)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def get_tags(request):
-    user = request.user
-    tags = Tag.objects.filter(user=user)
-    serializer = TagSerializer(tags, many=True)
+def tags_list_create(request):
+    if request.method == 'GET':
+        user = request.user
+        tags = Tag.objects.filter(user=user)
+        serializer = TagSerializer(tags, many=True)
 
-    return Response(serializer.data)
+        return Response(serializer.data)
+    
+    if request.method == 'POST':
+        serializer = TagSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def tag_detail(request, pk):
+    try:
+        tag = Tag.objects.get(id=pk, user=request.user)
+    except Tag.DoesNotExist:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = TagSerializer(tag)
+        return Response(serializer.data)
+
+    elif request.method == 'PATCH':
+        serializer = TagSerializer(tag, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        tag.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
