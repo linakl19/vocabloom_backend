@@ -92,6 +92,12 @@ def logout(request):
         return Response({'refreshed': False})
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def is_authenticated(request):
+    return Response({'authenticated': True})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_tags(request):
