@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from .models import Tag
-from .serializers import TagSerializer, UserRegistrationSerializer
+from .models import Tag, Word
+from .serializers import TagSerializer, UserRegistrationSerializer, WordSerializer, WordBasicSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -149,4 +149,62 @@ def tag_detail(request, pk):
     
     elif request.method == 'DELETE':
         tag.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def words_by_tag(request, pk):
+    try:
+        tag = Tag.objects.get(id=pk, user=request.user)
+    except Tag.DoesNotExist:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    words = Word.objects.filter(tag=tag, user=request.user)
+    serializer = WordBasicSerializer(words, many=True)
+    return Response(serializer.data)
+
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def words_list_create(request):
+    if request.method == 'GET':
+        user = request.user
+        words = Word.objects.filter(user=user)
+        serializer = WordBasicSerializer(words, many=True)
+
+        return Response(serializer.data)
+    
+    elif request.method == 'POST':
+        serializer = WordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def word_detail(request, pk):
+    try:
+        word = Word.objects.get(pk=pk, user=request.user)
+    except Word.DoesNotExist:
+        return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = WordSerializer(word)
+        return Response(serializer.data)
+
+    elif request.method == 'PATCH':
+        if 'note' not in request.data:
+            return Response({'detail': 'Only "note" field can be updated.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = WordSerializer(word, data={'note': request.data['note']}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        word.delete()  
         return Response(status=status.HTTP_204_NO_CONTENT)
