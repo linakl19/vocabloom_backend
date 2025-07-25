@@ -40,15 +40,15 @@ class DefinitionSerializer(serializers.ModelSerializer):
 
 
 class MeaningSerializer(serializers.ModelSerializer):
-    definitions = DefinitionSerializer(many=True, read_only=True)
+    definitions = DefinitionSerializer(many=True)
 
     class Meta:
         model = Meaning
-        fields = ['id', 'word', 'part_of_speech', 'definitions']
+        fields = ['id', 'part_of_speech', 'definitions']
 
 
 class WordSerializer(serializers.ModelSerializer):
-    meanings = MeaningSerializer(many=True, read_only=True)
+    meanings = MeaningSerializer(many=True)
 
     class Meta: 
         model = Word
@@ -57,8 +57,23 @@ class WordSerializer(serializers.ModelSerializer):
             'tag',
             'word',
             'phonetic',
-            'audio_url',
+            'audio',
             'note',
             'created_at',
             'meanings'
         ]
+    
+    def create(self, validated_data):
+        meanings_data = validated_data.pop('meanings', [])
+        word = Word.objects.create(**validated_data)
+        for meaning_data in meanings_data:
+            definitions_data = meaning_data.pop('definitions', [])
+            meaning = Meaning.objects.create(word=word, **meaning_data)
+            for definition_data in definitions_data:
+                Definition.objects.create(meaning=meaning, **definition_data)
+        return word
+
+class WordBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= Word
+        fields=['id', 'word']
