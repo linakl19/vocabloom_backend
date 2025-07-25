@@ -25,7 +25,7 @@ class Word(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True, related_name='words')
     word = models.CharField(max_length=100)
     phonetic = models.CharField(max_length=100, blank=True, null=True)
-    audio_url = models.URLField(blank=True, null=True)
+    audio = models.CharField(max_length=255, blank=True, null=True)
     note = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
