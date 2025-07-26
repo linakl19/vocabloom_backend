@@ -3,8 +3,21 @@ from django.contrib.auth.models import User
 from .models import Tag, Word, Meaning, Definition
 
 
+class SimpleSuccessSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+
+
+class SimpleRefreshedSerializer(serializers.Serializer):
+    refreshed = serializers.BooleanField()
+
+
+class SimpleAuthenticatedSerializer(serializers.Serializer):
+    authenticated = serializers.BooleanField()
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    
     class Meta: 
         model=User
         fields=['username', 'email', 'password', 'first_name', 'last_name']
