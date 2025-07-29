@@ -10,7 +10,6 @@ from .serializers import (
     TagSerializer,
     UserRegistrationSerializer,
     WordSerializer,
-    WordBasicSerializer,
     SimpleSuccessSerializer,
     SimpleRefreshedSerializer,
     SimpleAuthenticatedSerializer
@@ -21,9 +20,9 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-# ////////////////////
+# ===================================================
 # AUTHENTICATION VIEWS
-# ////////////////////
+# ===================================================
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     @extend_schema(
@@ -129,12 +128,12 @@ class RegisterUserView(views.APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# ////////////
-# TAG VIEWS 
-# ///////////
+# ===================================================
+# TAG VIEWS
+# ===================================================
 
 @extend_schema(tags=['Tags'])
 class TagListCreateView(generics.ListCreateAPIView):
@@ -159,14 +158,14 @@ class TagDetailView(generics.RetrieveUpdateDestroyAPIView):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
 
-# ////////////
-# WORD VIEWS 
-# ///////////
+# ===================================================
+# WORD VIEWS
+# ===================================================
 
 @extend_schema(tags=['Words'])
 class WordsByTagView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = WordBasicSerializer
+    serializer_class = WordSerializer
 
     def get_queryset(self):
         tag_id = self.kwargs['pk']
@@ -184,6 +183,12 @@ class WordListCreateView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+    
+    def get_serializer_context(self):
+        """Ensure request is in serializer context"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 @extend_schema(tags=['Words'])
 class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
