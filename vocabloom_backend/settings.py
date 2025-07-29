@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import environ
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,9 +100,19 @@ WSGI_APPLICATION = 'vocabloom_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DATABASES = {
-    'default': env.db('DATABASE_URL'),
-}
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    # Use in-memory SQLite for testing (fastest)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+else:
+    # Use PostgreSQL for development/production
+    DATABASES = {
+        'default': env.db('DATABASE_URL'),
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
