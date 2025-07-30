@@ -25,6 +25,8 @@ from rest_framework_simplejwt.views import (
 # ===================================================
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    permission_classes = [AllowAny] 
+    
     @extend_schema(
         responses=SimpleSuccessSerializer,
         tags=['Authentication']
