@@ -100,16 +100,22 @@ WSGI_APPLICATION = 'vocabloom_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+DJANGO_ENV = env('DJANGO_ENV', default='development')
+
 if 'test' in sys.argv or 'test_coverage' in sys.argv:
-    # Use in-memory SQLite for testing (fastest)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         }
     }
+elif DJANGO_ENV == 'development':
+    # Use local DB for dev
+    DATABASES = {
+        'default': env.db('LOCAL_DATABASE_URL'),
+    }
 else:
-    # Use PostgreSQL for development/production
+    # Use production DB for prod
     DATABASES = {
         'default': env.db('DATABASE_URL'),
     }
@@ -160,6 +166,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://vocabloomapp.netlify.app"
 ]
 
 # If you need to allow all origins temporarily for testing:
