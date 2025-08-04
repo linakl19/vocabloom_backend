@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, views, status
@@ -26,47 +27,59 @@ from rest_framework_simplejwt.views import (
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny] 
-    
+
     @extend_schema(
         responses=SimpleSuccessSerializer,
         tags=['Authentication']
     )
         
     def post(self, request, *args, **kwargs):
-
-        try:
-            response = super().post(request, *args, **kwargs)
-            tokens = response.data
-
-            access_token = tokens['access']
-            refresh_token = tokens['refresh']
-
-            res = Response()
-
-            res.data = {'success': True}
-
-            res.set_cookie(
-                key="access_token", 
-                value=access_token,
-                httponly=True, 
-                secure=True,
-                samesite='None', 
-                path='/'
-            )
-
-            res.set_cookie(
-                key="refresh_token", 
-                value=refresh_token,
-                httponly=True, 
-                secure=True,
-                samesite='None', 
-                path='/'
-            )
-
-            return res
+        # Call parent method to get tokens
+        response = super().post(request, *args, **kwargs)
         
-        except: 
-            return Response({'success': False})
+        # If authentication failed, return the error response as-is
+        if response.status_code != 200:
+            return response
+        
+        # Extract tokens from parent response
+        access_token = response.data.get('access')
+        refresh_token = response.data.get('refresh')
+        
+        # Return tokens in response body for mobile compatibility
+        response_data = {
+            'access': access_token,
+            'refresh': refresh_token,
+            'success': True
+        }
+        res = Response(response_data)
+        
+        # Set environment-appropriate cookies
+        cookie_secure = not settings.DEBUG
+        cookie_samesite = 'None' if not settings.DEBUG else 'Lax'
+        
+        # Access token cookie
+        res.set_cookie(
+            key="access_token",
+            value=access_token,
+            max_age=60 * 60,  # 1 hour
+            httponly=True,
+            secure=cookie_secure,
+            samesite=cookie_samesite,
+            path='/'
+        )
+        
+        # Refresh token cookie
+        res.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            max_age=7 * 24 * 60 * 60,  # 7 days
+            httponly=True,
+            secure=cookie_secure,
+            samesite=cookie_samesite,
+            path='/'
+        )
+        
+        return res
 
 class CustomRefreshTokenView(TokenRefreshView):
     @extend_schema(
