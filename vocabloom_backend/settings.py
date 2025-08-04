@@ -175,7 +175,7 @@ if DEBUG:
 else:
     # For production: 
     CORS_ALLOWED_ORIGINS = [
-        "https://vocabloomapp.netlify.app/"
+        "https://vocabloomapp.netlify.app"
     ]
     CORS_ALLOW_ALL_ORIGINS = False
 
