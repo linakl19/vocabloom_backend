@@ -172,13 +172,11 @@ if DEBUG:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
-    CORS_ALLOW_ALL_ORIGINS = False  # For testing
 else:
     # For production: 
     CORS_ALLOWED_ORIGINS = [
         "https://vocabloomapp.netlify.app"
     ]
-    CORS_ALLOW_ALL_ORIGINS = False
 
 # Additional headers for mobile compatibility
 CORS_ALLOW_HEADERS = [
