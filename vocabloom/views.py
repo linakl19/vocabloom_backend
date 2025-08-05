@@ -26,13 +26,12 @@ from rest_framework_simplejwt.views import (
 # ===================================================
 
 class CustomTokenObtainPairView(TokenObtainPairView):
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
 
     @extend_schema(
         responses=SimpleSuccessSerializer,
         tags=['Authentication']
     )
-        
     def post(self, request, *args, **kwargs):
         # Call parent method to get tokens
         response = super().post(request, *args, **kwargs)
@@ -41,77 +40,37 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if response.status_code != 200:
             return response
         
-        # Extract tokens from parent response
+        # Extract tokens and return in response body only
         access_token = response.data.get('access')
         refresh_token = response.data.get('refresh')
         
-        # Return tokens in response body for mobile compatibility
-        response_data = {
+        # Return tokens in response body (no cookies)
+        return Response({
             'access': access_token,
             'refresh': refresh_token,
             'success': True
-        }
-        res = Response(response_data)
-        
-        # Set environment-appropriate cookies
-        cookie_secure = not settings.DEBUG
-        cookie_samesite = 'None' if not settings.DEBUG else 'Lax'
-        
-        # Access token cookie
-        res.set_cookie(
-            key="access_token",
-            value=access_token,
-            max_age=60 * 60,  # 1 hour
-            httponly=True,
-            secure=cookie_secure,
-            samesite=cookie_samesite,
-            path='/'
-        )
-        
-        # Refresh token cookie
-        res.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            max_age=7 * 24 * 60 * 60,  # 7 days
-            httponly=True,
-            secure=cookie_secure,
-            samesite=cookie_samesite,
-            path='/'
-        )
-        
-        return res
+        })
 
 class CustomRefreshTokenView(TokenRefreshView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         responses=SimpleRefreshedSerializer,
         tags=['Authentication']
     )
     def post(self, request, *args, **kwargs):
-        try:
-            refresh_token = request.COOKIES.get('refresh_token')
-            request.data['refresh'] = refresh_token
-
-            response = super().post(request, *args, **kwargs)
-            tokens = response.data
-            access_token = tokens['access']
-
-            res = Response()
-
-            res.data= {'refreshed': True}
-
-            res.set_cookie(
-                key="access_token", 
-                value=access_token,
-                httponly=True, 
-                secure=True,
-                samesite='None', 
-                path='/'
-            )
-
-            return res
+        # Standard token refresh - expects refresh token in request body
+        response = super().post(request, *args, **kwargs)
         
-        except:
-            return Response({'refreshed': False})
+        if response.status_code == 200:
+            # Return success indicator along with new tokens
+            return Response({
+                'access': response.data.get('access'),
+                'refresh': response.data.get('refresh', request.data.get('refresh')),
+                'refreshed': True
+            })
+        
+        return Response({'refreshed': False}, status=response.status_code)
 
 @extend_schema(responses=SimpleSuccessSerializer, tags=['Authentication'])
 class LogoutView(views.APIView):
@@ -119,10 +78,9 @@ class LogoutView(views.APIView):
     serializer_class = SimpleSuccessSerializer
 
     def post(self, request):
-        res = Response({'success': True})
-        res.delete_cookie('access_token', path='/', samesite='None')
-        res.delete_cookie('refresh_token', path='/', samesite='None')
-        return res
+        # With token-only auth, logout is handled on frontend
+        # Backend just confirms the request was authenticated
+        return Response({'success': True})
 
 @extend_schema(responses=SimpleAuthenticatedSerializer, tags=['Authentication'])
 class IsAuthenticatedView(views.APIView):
