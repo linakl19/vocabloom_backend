@@ -183,7 +183,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
-    'authorization',
+    'Authorization',
     'content-type',
     'dnt',
     'origin',
