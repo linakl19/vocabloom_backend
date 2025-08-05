@@ -70,7 +70,8 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'vocabloom.authentication.CookiesJWTAuthentication',
+        # 'vocabloom.authentication.CookiesJWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ), 
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -171,7 +172,7 @@ if DEBUG:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
-    CORS_ALLOW_ALL_ORIGINS = True  # For testing
+    CORS_ALLOW_ALL_ORIGINS = False  # For testing
 else:
     # For production: 
     CORS_ALLOWED_ORIGINS = [
@@ -200,17 +201,3 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
 }
-
-# Environment-specific cookie settings
-if DEBUG:
-    # Development: Relaxed settings for local testing
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = 'Lax'
-    CSRF_COOKIE_SECURE = False
-else:
-    # Production: Strict settings remain the same
-    SESSION_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'None'
-    CSRF_COOKIE_SECURE = True
