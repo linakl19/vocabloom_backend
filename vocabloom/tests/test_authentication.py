@@ -52,13 +52,20 @@ class AuthenticationTestCase(APITestCase):
 
     # ----------- LOGIN TESTS -----------
 
-    def test_user_login(self):
-        """Test user can login and receive tokens."""
+    def test_user_login_with_token(self):
+        """Test user can login and use JWT token for authentication."""
         User.objects.create_user(username='testuser', password='testpass123')
         data = {'username': 'testuser', 'password': 'testpass123'}
         response = self.client.post(self.login_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access_token', response.cookies)
+        access_token = response.data.get('access')
+        self.assertIsNotNone(access_token)
+
+        # Use token to access a protected endpoint
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        protected_response = self.client.get(self.auth_check_url)
+        self.assertEqual(protected_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(protected_response.data['authenticated'])
 
     def test_login_invalid_credentials_returns_unauthorized(self):
         """Wrong password should fail."""
@@ -66,10 +73,9 @@ class AuthenticationTestCase(APITestCase):
         data = {'username': 'testuser', 'password': 'wrongpass'}
         response = self.client.post(self.login_url, data)
         
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertNotEqual(response.data.get('success'), True)
-        self.assertNotIn('access_token', response.cookies)
-
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertNotIn('access', response.data)
+        
     # ----------- LOGOUT TESTS -----------
 
     def test_logout_success(self):
