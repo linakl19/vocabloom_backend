@@ -211,6 +211,10 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': False,
 }
 
+# Amazon Polly Configuration
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
 AWS_REGION = env('AWS_REGION')
+
+# Gemini API Configuration
+GEMINI_API_KEY = env('GEMINI_API_KEY')
