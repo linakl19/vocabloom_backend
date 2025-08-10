@@ -11,3 +11,4 @@ drf-spectacular==0.27.0
 setuptools
 boto3==1.34.162
 botocore==1.34.162
+google-generativeai==0.8.5
