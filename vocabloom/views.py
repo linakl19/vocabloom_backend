@@ -11,10 +11,12 @@ from .services.polly_service import PollyService
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import Tag, Word
+from .models import UserExample
 from .serializers import (
     TagSerializer,
     UserRegistrationSerializer,
     WordSerializer,
+    UserExampleSerializer,
     SimpleSuccessSerializer,
     SimpleRefreshedSerializer,
     SimpleAuthenticatedSerializer,
@@ -168,7 +170,7 @@ class WordListCreateView(generics.ListCreateAPIView):
     serializer_class = WordSerializer
 
     def get_queryset(self):
-        return Word.objects.filter(user=self.request.user)
+        return Word.objects.filter(user=self.request.user).prefetch_related('user_examples')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -186,7 +188,7 @@ class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WordSerializer
 
     def get_queryset(self):
-        return Word.objects.filter(user=self.request.user)
+        return Word.objects.filter(user=self.request.user).prefetch_related('user_examples')
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -196,7 +198,7 @@ class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
                 {"detail": 'PATCH must include a "note" field.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         note_value = request.data.get("note", None)
 
         serializer = self.get_serializer(
@@ -206,75 +208,108 @@ class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
         self.perform_update(serializer)
         return Response(serializer.data)
 
+
+# ===================================================
+# AUDIO VIEWS
+# ===================================================
+
+
 @extend_schema(
     request={
-        'application/json': {
-            'type': 'object',
-            'properties': {
-                'text': {'type': 'string', 'description': 'Text to convert to speech'},
-                'voice_id': {'type': 'string', 'description': 'Voice ID (default: Joanna)'}
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "Text to convert to speech"},
+                "voice_id": {
+                    "type": "string",
+                    "description": "Voice ID (default: Joanna)",
+                },
             },
-            'required': ['text']
+            "required": ["text"],
         }
     },
     responses={
         200: {
-            'type': 'object',
-            'properties': {
-                'success': {'type': 'boolean'},
-                'audio_data': {'type': 'string', 'description': 'Base64 encoded audio'},
-                'content_type': {'type': 'string'},
-                'voice_id': {'type': 'string'}
-            }
+            "type": "object",
+            "properties": {
+                "success": {"type": "boolean"},
+                "audio_data": {"type": "string", "description": "Base64 encoded audio"},
+                "content_type": {"type": "string"},
+                "voice_id": {"type": "string"},
+            },
         },
-        400: {
-            'type': 'object',
-            'properties': {
-                'error': {'type': 'string'}
-            }
-        }
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
     },
-    tags=['Audio']
+    tags=["Audio"],
 )
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def text_to_speech(request):
-#     """Convert text to speech using Amazon Polly"""
-#     text = request.data.get('text', '').strip()
-#     voice_id = request.data.get('voice_id', 'Joanna')
-    
-#     if not text:
-#         return Response(
-#             {'error': 'Text is required'}, 
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     polly_service = PollyService()
-#     result = polly_service.text_to_speech(text, voice_id)
-    
-#     if 'error' in result:
-#         return Response(
-#             {'error': result['error']}, 
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     return Response(result, status=status.HTTP_200_OK)
-
 class TextToSpeechView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """Convert text to speech using Amazon Polly"""
-        text = request.data.get('text', '').strip()
-        voice_id = request.data.get('voice_id', 'Joanna')
-        
+        text = request.data.get("text", "").strip()
+        voice_id = request.data.get("voice_id", "Joanna")
+
         if not text:
-            return Response({'error': 'Text is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Text is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         polly_service = PollyService()
         result = polly_service.text_to_speech(text, voice_id)
-        
-        if 'error' in result:
-            return Response({'error': result['error']}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        if "error" in result:
+            return Response(
+                {"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         return Response(result, status=status.HTTP_200_OK)
+
+
+# ===================================================
+# USER EXAMPLE VIEWS
+# ===================================================
+
+
+@extend_schema(
+    request=UserExampleSerializer,
+    responses={201: UserExampleSerializer},
+    tags=["User Examples"],
+)
+class UserExampleCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserExampleSerializer
+
+    def perform_create(self, serializer):
+        word_id = self.kwargs["word_id"]
+        word = get_object_or_404(Word, id=word_id, user=self.request.user)
+        serializer.save(word=word, user=self.request.user)
+
+
+@extend_schema(
+    responses={200: UserExampleSerializer(many=True)}, tags=["User Examples"]
+)
+class UserExampleListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserExampleSerializer
+
+    def get_queryset(self):
+        word_id = self.kwargs["word_id"]
+        word = get_object_or_404(Word, id=word_id, user=self.request.user)
+        return UserExample.objects.filter(word=word, user=self.request.user).order_by("-created_at")
+
+
+@extend_schema(
+    request=UserExampleSerializer,
+    responses={200: UserExampleSerializer},
+    tags=["User Examples"],
+)
+class UserExampleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserExampleSerializer
+    lookup_url_kwarg = "example_id"
+
+    def get_queryset(self):
+        word_id = self.kwargs["word_id"]
+        word = get_object_or_404(Word, id=word_id, user=self.request.user)
+        return UserExample.objects.filter(word=word, user=self.request.user)

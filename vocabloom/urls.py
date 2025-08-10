@@ -11,7 +11,10 @@ from .views import (
     WordsByTagView,
     WordListCreateView,
     WordDetailView,
-    TextToSpeechView
+    TextToSpeechView,
+    UserExampleListView,
+    UserExampleCreateView,
+    UserExampleDetailView
 )
 
 urlpatterns = [
@@ -31,6 +34,11 @@ urlpatterns = [
     path('words/<int:pk>/', WordDetailView.as_view(), name='word_detail'),
     path('tags/<int:pk>/words/', WordsByTagView.as_view(), name='words_by_tag'),
 
-        # Audio endpoints
+    # Audio endpoints
     path('audio/', TextToSpeechView.as_view(), name='text_to_speech'),
+
+    # User Example Views
+    path('words/<int:word_id>/examples/', UserExampleListView.as_view(), name='user-example-list'),
+    path('words/<int:word_id>/examples/create/', UserExampleCreateView.as_view(), name='user-example-create'),
+    path('words/<int:word_id>/examples/<int:example_id>/', UserExampleDetailView.as_view(), name='user-example-detail'),
 ]

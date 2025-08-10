@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Tag, Word, Meaning, Definition
+from .models import Tag, Word, Meaning, Definition, UserExample
 
 
 class SimpleSuccessSerializer(serializers.Serializer):
@@ -81,6 +81,23 @@ class TagSerializer(serializers.ModelSerializer):
         return value
 
 
+class UserExampleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserExample
+        fields = ['id', 'example_text', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_example_text(self, value):
+        """Validate that example text is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Example text cannot be empty.")
+        
+        if len(value.strip()) < 3:
+            raise serializers.ValidationError("Example text must be at least 3 characters long.")
+            
+        return value.strip()
+
+
 class DefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Definition
@@ -101,6 +118,7 @@ class MeaningSerializer(serializers.ModelSerializer):
 
 class WordSerializer(serializers.ModelSerializer):
     meanings = MeaningSerializer(many=True, required=False)
+    user_examples = UserExampleSerializer(many=True, read_only=True)
     tag = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.none(), required=False, allow_null=True
     )
@@ -114,8 +132,9 @@ class WordSerializer(serializers.ModelSerializer):
             "audio",
             "note",
             "tag",
-            "meanings",
+            "user_examples",
             "created_at",
+            "meanings",
         ]
         extra_kwargs = {
             "word": {"required": True},
