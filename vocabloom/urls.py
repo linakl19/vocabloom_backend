@@ -10,7 +10,8 @@ from .views import (
     TagDetailView,
     WordsByTagView,
     WordListCreateView,
-    WordDetailView
+    WordDetailView,
+    TextToSpeechView
 )
 
 urlpatterns = [
@@ -29,4 +30,7 @@ urlpatterns = [
     path('words/', WordListCreateView.as_view(), name='words_list_create'),
     path('words/<int:pk>/', WordDetailView.as_view(), name='word_detail'),
     path('tags/<int:pk>/words/', WordsByTagView.as_view(), name='words_by_tag'),
+
+        # Audio endpoints
+    path('audio/', TextToSpeechView.as_view(), name='text_to_speech'),
 ]

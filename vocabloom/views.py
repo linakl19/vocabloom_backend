@@ -5,6 +5,10 @@ from rest_framework import generics, views, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from rest_framework.generics import GenericAPIView
+
+from .services.polly_service import PollyService
+from rest_framework.decorators import api_view, permission_classes
 
 from .models import Tag, Word
 from .serializers import (
@@ -201,3 +205,76 @@ class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'text': {'type': 'string', 'description': 'Text to convert to speech'},
+                'voice_id': {'type': 'string', 'description': 'Voice ID (default: Joanna)'}
+            },
+            'required': ['text']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'audio_data': {'type': 'string', 'description': 'Base64 encoded audio'},
+                'content_type': {'type': 'string'},
+                'voice_id': {'type': 'string'}
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    },
+    tags=['Audio']
+)
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def text_to_speech(request):
+#     """Convert text to speech using Amazon Polly"""
+#     text = request.data.get('text', '').strip()
+#     voice_id = request.data.get('voice_id', 'Joanna')
+    
+#     if not text:
+#         return Response(
+#             {'error': 'Text is required'}, 
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     polly_service = PollyService()
+#     result = polly_service.text_to_speech(text, voice_id)
+    
+#     if 'error' in result:
+#         return Response(
+#             {'error': result['error']}, 
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     return Response(result, status=status.HTTP_200_OK)
+
+class TextToSpeechView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Convert text to speech using Amazon Polly"""
+        text = request.data.get('text', '').strip()
+        voice_id = request.data.get('voice_id', 'Joanna')
+        
+        if not text:
+            return Response({'error': 'Text is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        polly_service = PollyService()
+        result = polly_service.text_to_speech(text, voice_id)
+        
+        if 'error' in result:
+            return Response({'error': result['error']}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(result, status=status.HTTP_200_OK)
