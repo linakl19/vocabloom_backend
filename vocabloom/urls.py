@@ -14,7 +14,8 @@ from .views import (
     TextToSpeechView,
     UserExampleListView,
     UserExampleCreateView,
-    UserExampleDetailView
+    UserExampleDetailView,
+    GenerateWordExampleView,
 )
 
 urlpatterns = [
@@ -41,4 +42,7 @@ urlpatterns = [
     path('words/<int:word_id>/examples/', UserExampleListView.as_view(), name='user-example-list'),
     path('words/<int:word_id>/examples/create/', UserExampleCreateView.as_view(), name='user-example-create'),
     path('words/<int:word_id>/examples/<int:example_id>/', UserExampleDetailView.as_view(), name='user-example-detail'),
+
+    # Gemini AI Examples
+    path('words/<int:word_id>/examples/generate/', GenerateWordExampleView.as_view(), name='generate-word-example'),
 ]
