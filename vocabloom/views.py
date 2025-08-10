@@ -8,6 +8,8 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.generics import GenericAPIView
 
 from .services.polly_service import PollyService
+from .services.gemini_service import GeminiService
+
 from rest_framework.decorators import api_view, permission_classes
 
 from .models import Tag, Word
@@ -313,3 +315,53 @@ class UserExampleDetailView(generics.RetrieveUpdateDestroyAPIView):
         word_id = self.kwargs["word_id"]
         word = get_object_or_404(Word, id=word_id, user=self.request.user)
         return UserExample.objects.filter(word=word, user=self.request.user)
+
+
+# ===================================================
+# GEMINI AI VIEWS (Class-Based)
+# ===================================================
+
+
+@extend_schema(
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'context': {'type': 'string', 'description': 'Optional context'},
+                'difficulty_level': {'type': 'string', 'enum': ['beginner', 'intermediate', 'advanced']},
+            }
+        }
+    },
+    responses={200: {'type': 'object'}},
+    tags=['User Examples']
+)
+class GenerateWordExampleView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, word_id, *args, **kwargs):
+        """Generate an example sentence for a word using Gemini AI"""
+        try:
+            word = Word.objects.get(id=word_id, user=request.user)
+        except Word.DoesNotExist:
+            return Response({
+                'error': 'Word not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get parameters from request
+        context = request.data.get('context')
+        difficulty_level = request.data.get('difficulty_level', 'intermediate')
+        
+        # Initialize Gemini service
+        gemini_service = GeminiService()
+        
+        # Generate single example
+        result = gemini_service.generate_user_example(
+            word=word.word,
+            context=context,
+            difficulty_level=difficulty_level
+        )
+        
+        if result.get('success'):
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
