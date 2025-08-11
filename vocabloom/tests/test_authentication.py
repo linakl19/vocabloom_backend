@@ -15,6 +15,7 @@ class AuthenticationTestCase(APITestCase):
 
     def test_user_registration(self):
         """Test user can register successfully."""
+        # Arrange
         data = {
             'username': 'testuser',
             'email': 'test@example.com',
@@ -22,12 +23,15 @@ class AuthenticationTestCase(APITestCase):
             'first_name': 'Test',
             'last_name': 'User'
         }
+        # Act
         response = self.client.post(self.register_url, data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(username='testuser').exists())
 
     def test_registration_duplicate_email_returns_bad_request(self):
         """Prevent duplicate emails."""
+        # Arrange
         User.objects.create_user(username='user1', email='test@example.com', password='pass123')
         data = {
             'username': 'user2',
@@ -36,27 +40,36 @@ class AuthenticationTestCase(APITestCase):
             'first_name': 'Test',
             'last_name': 'User'
         }
+        # Act
         response = self.client.post(self.register_url, data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
     def test_registration_invalid_data_returns_bad_request(self):
         """Test registration with invalid data returns 400."""
+        # Arrange
         data = {
             'username': '',
             'email': 'invalid-email',
             'password': '123',
         }
+        # Act
         response = self.client.post(self.register_url, data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    # ----------- LOGIN TESTS -----------
 
+    # ----------- LOGIN TESTS -----------
     def test_user_login_with_token(self):
         """Test user can login and use JWT token for authentication."""
+        # Arrange
         User.objects.create_user(username='testuser', password='testpass123')
         data = {'username': 'testuser', 'password': 'testpass123'}
+        # Act
         response = self.client.post(self.login_url, data)
+
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         access_token = response.data.get('access')
         self.assertIsNotNone(access_token)
@@ -67,32 +80,74 @@ class AuthenticationTestCase(APITestCase):
         self.assertEqual(protected_response.status_code, status.HTTP_200_OK)
         self.assertTrue(protected_response.data['authenticated'])
 
+
     def test_login_invalid_credentials_returns_unauthorized(self):
         """Wrong password should fail."""
+        # Arrange
         User.objects.create_user(username='testuser', password='correctpass')
         data = {'username': 'testuser', 'password': 'wrongpass'}
+        # Act
         response = self.client.post(self.login_url, data)
-        
+        # Arrange
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertNotIn('access', response.data)
         
-    # ----------- LOGOUT TESTS -----------
 
+    # ----------- LOGOUT TESTS -----------
     def test_logout_success(self):
         """Test authenticated user can logout."""
+        # Arrange
         user = User.objects.create_user(username='testuser', password='testpass123')
         self.client.force_authenticate(user=user)
+        # Act
         response = self.client.post(self.logout_url)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['success'])
 
+
     def test_logout_unauthenticated_fails(self):
         """Unauthenticated users cannot logout."""
+        # Act
         response = self.client.post(self.logout_url)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # ----------- COMPLETE FLOW -----------
 
+    # ----------- TOKEN REFRESH TESTS -----------
+    def test_token_refresh_success(self):
+        """Test token refresh functionality."""
+        # Arrange
+        user = User.objects.create_user(username='testuser', password='testpass123')
+        
+            # Get initial tokens
+        login_data = {'username': 'testuser', 'password': 'testpass123'}
+        login_response = self.client.post(self.login_url, login_data)
+        refresh_token = login_response.data['refresh']
+        
+            # Test refresh
+        refresh_url = reverse('token_refresh')
+        refresh_data = {'refresh': refresh_token}
+
+        # Act 
+        refresh_response = self.client.post(refresh_url, refresh_data)
+        # Assert
+        self.assertEqual(refresh_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', refresh_response.data)
+        self.assertTrue(refresh_response.data['refreshed'])
+
+    def test_token_refresh_invalid_token_fails(self):
+        """Invalid refresh token should fail."""
+        # Arrange
+        refresh_url = reverse('token_refresh')
+        refresh_data = {'refresh': 'invalid_token'}
+        # Act
+        response = self.client.post(refresh_url, refresh_data)
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+    # ----------- COMPLETE FLOW -----------
     def test_complete_authentication_flow(self):
         """Test full auth flow: register -> login -> access protected endpoint -> logout."""
         # Register

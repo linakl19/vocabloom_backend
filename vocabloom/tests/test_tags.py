@@ -28,8 +28,11 @@ class TagTestCase(APITestCase):
 
     def test_create_new_tag_success(self):
         """User can create a new tag."""
+        # Arrange
         data = {"name": "Ada vocabulary"}
+        # Act
         response = self.client.post(self.tags_url, data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Tag.objects.count(), 1)
         tag = Tag.objects.first()
@@ -38,8 +41,11 @@ class TagTestCase(APITestCase):
     
     def test_create_tag_returns_bad_request(self):
         """Returns 400 if name is missing."""
+        # Arrange
         data = {'name': ''}
+        # Act
         response = self.client.post(self.tags_url, data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Tag.objects.count(), 0)
 
@@ -47,11 +53,13 @@ class TagTestCase(APITestCase):
 
     def test_list_user_tags_success(self):
         """Lists only tags for authenticated user."""
+        # Arrange
         Tag.objects.create(user=self.user, name='My Tag 1')
         Tag.objects.create(user=self.user, name='My Tag 2')
         Tag.objects.create(user=self.other_user, name='Not my tag')
-
+        # Act
         response = self.client.get(self.tags_url)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
         tag_names = [tag['name'] for tag in response.data]
@@ -63,39 +71,53 @@ class TagTestCase(APITestCase):
 
     def test_invalid_user_tags_returns_not_found(self):
         """Cannot get details of another user's tag."""
+        # Arrange
         other_tag = Tag.objects.create(user=self.other_user, name='Other Tag')
+        # Act
         response = self.client.get(self.tag_detail_url(other_tag.id))
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_retrieves_one_tag_success(self):
         """Can retrieve own tag by id."""
+        # Arrange
         tag = Tag.objects.create(user=self.user, name='My Tag')
+        # Act
         response = self.client.get(self.tag_detail_url(tag.id))
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'My Tag')
         self.assertEqual(response.data['id'], tag.id)
 
     def test_retrieves_one_tag_returns_not_found(self):
         """Returns 404 if tag does not exist."""
+        # Act
         response = self.client.get(self.tag_detail_url(9))
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # ----------- UPDATE TAGS -----------
 
     def test_tag_update_with_put_success(self):
         """Can update a tag name with PUT."""
+        # Arrange
         tag = Tag.objects.create(user=self.user, name='Old tag name')
         data = {"name": "New name"}
+        # Act
         response = self.client.put(self.tag_detail_url(tag.id), data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'New name')
         self.assertEqual(response.data['id'], tag.id)
 
     def test_tag_put_update_with_missing_data_returns_not_found(self):
         """PUT with missing data returns 400."""
+        # Arrange
         tag = Tag.objects.create(user=self.user, name='My tag')
         data = {"name": ""}
+        # Act
         response = self.client.put(self.tag_detail_url(tag.id), data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('name', response.data)
 
@@ -103,7 +125,9 @@ class TagTestCase(APITestCase):
         """Cannot update another user's tag."""
         other_tag = Tag.objects.create(user=self.other_user, name='Other Tag')
         data = {'name': 'Hacked Name'}
+        # Act
         response = self.client.patch(self.tag_detail_url(other_tag.id), data)
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         other_tag.refresh_from_db()
         self.assertEqual(other_tag.name, 'Other Tag')
@@ -112,15 +136,21 @@ class TagTestCase(APITestCase):
 
     def test_delete_tag_success(self):
         """Can delete own tag."""
+        # Arrange
         tag = Tag.objects.create(user=self.user, name='To Delete')
         tag_id = tag.id
+        # Act
         response = self.client.delete(self.tag_detail_url(tag_id))
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Tag.objects.filter(id=tag_id).exists())
 
     def test_delete_other_user_tag_forbidden(self):
         """Cannot delete another user's tag."""
+        # Arrange
         other_tag = Tag.objects.create(user=self.other_user, name='Other Tag')
+        # Act
         response = self.client.delete(self.tag_detail_url(other_tag.id))
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Tag.objects.filter(id=other_tag.id).exists())
