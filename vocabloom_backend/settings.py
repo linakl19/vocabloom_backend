@@ -9,23 +9,29 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 import environ
-import os
-import sys
+
+# ===================================================
+# BASIC CONFIGURATION
+# ===================================================
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Environment configuration
 env = environ.Env(
     DEBUG=(bool, False)
 )
-
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 env = environ.Env()
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+# ===================================================
+# SECURITY SETTINGS
+# ===================================================
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -33,14 +39,16 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
+# Allowed hosts
 ALLOWED_HOSTS = [
     'vocabloom-backend.onrender.com',
-    'localhost',          
-    '127.0.0.1',           
+    'localhost',
+    '127.0.0.1',
 ]
 
-
-# Application definition
+# ===================================================
+# APPLICATION DEFINITION
+# ===================================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -68,18 +76,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'vocabloom.authentication.CookiesJWTAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ), 
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-}
-
 ROOT_URLCONF = 'vocabloom_backend.urls'
+
+# ===================================================
+# TEMPLATES
+# ===================================================
 
 TEMPLATES = [
     {
@@ -99,12 +100,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'vocabloom_backend.wsgi.application'
 
+# ===================================================
+# DATABASE CONFIGURATION
+# ===================================================
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DJANGO_ENV = env('DJANGO_ENV', default='development')
 
 if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    # Test database configuration
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -112,18 +115,19 @@ if 'test' in sys.argv or 'test_coverage' in sys.argv:
         }
     }
 elif DJANGO_ENV == 'development':
-    # Use local DB for dev
+    # Development database configuration
     DATABASES = {
         'default': env.db('LOCAL_DATABASE_URL'),
     }
 else:
-    # Use production DB for prod
+    # Production database configuration
     DATABASES = {
         'default': env.db('DATABASE_URL'),
     }
 
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+# ===================================================
+# PASSWORD VALIDATION
+# ===================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -140,44 +144,45 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+# ===================================================
+# INTERNATIONALIZATION
+# ===================================================
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
+# ===================================================
+# STATIC FILES
+# ===================================================
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+# ===================================================
+# DEFAULT FIELD TYPES
+# ===================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS_ALLOW_CREDENTIALS = False
+# ===================================================
+# DJANGO REST FRAMEWORK
+# ===================================================
 
-# if DEBUG:
-#     # For Development: 
-#     CORS_ALLOWED_ORIGINS = [
-#         "http://localhost:3000",
-#         "http://127.0.0.1:3000",
-#     ]
-# else:
-#     # For production: 
-#     CORS_ALLOWED_ORIGINS = [
-#         "https://vocabloomapp.netlify.app"
-#     ]
-# CORS_ALLOW_ALL_ORIGINS = False
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# ===================================================
+# CORS CONFIGURATION
+# ===================================================
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -202,7 +207,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# JWT Configuration for mobile compatibility
+# ===================================================
+# JWT CONFIGURATION
+# ===================================================
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -211,10 +219,17 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': False,
 }
 
+# ===================================================
+# THIRD-PARTY SERVICE CONFIGURATIONS
+# ===================================================
+
 # Amazon Polly Configuration
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
 AWS_REGION = env('AWS_REGION')
 
-# Gemini API Configuration
+# Google Gemini API Configuration
 GEMINI_API_KEY = env('GEMINI_API_KEY')
+
+# Optional: Polly default settings
+POLLY_DEFAULT_SPEED = env('POLLY_DEFAULT_SPEED', default='slow')
