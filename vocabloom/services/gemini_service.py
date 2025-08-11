@@ -19,14 +19,6 @@ class GeminiService:
     def generate_user_example(self, word, context=None, difficulty_level="intermediate"):
         """
         Generate a user example sentence for a given word
-        
-        Args:
-            word (str): The word to create an example for
-            part_of_speech (str): Optional part of speech (noun, verb, adjective, etc.)
-            difficulty_level (str): beginner, intermediate, or advanced
-        
-        Returns:
-            dict: Success status and generated example or error message
         """
         if not self.model:
             return {"error": "Gemini service not available"}
