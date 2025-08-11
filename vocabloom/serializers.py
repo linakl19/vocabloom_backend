@@ -3,6 +3,10 @@ from django.contrib.auth.models import User
 from .models import Tag, Word, Meaning, Definition, UserExample
 
 
+# ===================================================
+# SIMPLE RESPONSE SERIALIZERS
+# ===================================================
+
 class SimpleSuccessSerializer(serializers.Serializer):
     success = serializers.BooleanField()
 
@@ -14,6 +18,10 @@ class SimpleRefreshedSerializer(serializers.Serializer):
 class SimpleAuthenticatedSerializer(serializers.Serializer):
     authenticated = serializers.BooleanField()
 
+
+# ===================================================
+# USER SERIALIZERS
+# ===================================================
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -57,6 +65,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "first_name", "last_name"]
 
 
+# ===================================================
+# TAG SERIALIZERS
+# ===================================================
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -81,6 +93,10 @@ class TagSerializer(serializers.ModelSerializer):
         return value
 
 
+# ===================================================
+# USER EXAMPLE SERIALIZERS
+# ===================================================
+
 class UserExampleSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserExample
@@ -97,6 +113,10 @@ class UserExampleSerializer(serializers.ModelSerializer):
             
         return value.strip()
 
+
+# ===================================================
+# WORD DEFINITION SERIALIZERS
+# ===================================================
 
 class DefinitionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -115,6 +135,10 @@ class MeaningSerializer(serializers.ModelSerializer):
         model = Meaning
         fields = ["id", "part_of_speech", "definitions"]
 
+
+# ===================================================
+# WORD SERIALIZERS
+# ===================================================
 
 class WordSerializer(serializers.ModelSerializer):
     meanings = MeaningSerializer(many=True, required=False)
@@ -158,7 +182,6 @@ class WordSerializer(serializers.ModelSerializer):
             word_text = data.get('word')
             user = request.user
 
-            # Check if word already exists for this user
             existing_query = Word.objects.filter(
                 user=user,
                 word__iexact=word_text  # Case-insensitive comparison
@@ -201,10 +224,8 @@ class WordSerializer(serializers.ModelSerializer):
         return word
 
     def update(self, instance, validated_data):
-        # Remove meanings from validated_data for now (don't update nested)
         validated_data.pop("meanings", None)
 
-        # Update word fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
