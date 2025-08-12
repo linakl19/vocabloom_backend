@@ -2,6 +2,21 @@
 
 A powerful Django REST API backend for the VocaBloom vocabulary learning application. This API provides comprehensive vocabulary management with AI-powered features including example generation and text-to-speech capabilities.
 
+## Goal
+Vocabloom is designed for **English learners**, especially those studying English as a second language (ESL).  
+It helps users build and organize their vocabulary with tools that go beyond a basic dictionary.
+
+**Our mission is to transform vocabulary learning from passive memorization into an active, personalized experience.**
+
+## Highlights
+- **Smart Word Search** — Get phonetics, audio, part of speech, meanings, definitions, and examples using a third party dictionary API
+- **Personal Vocabulary Collection** — Save and tag words for easy review
+- **Custom Word** — Add your own words with personalized meanings, phonetics, and tags  
+- **Personal Notes & Examples** — Keep your own notes and example sentences for each word  
+- **Amazon Polly Audio** — Listen the examples in natural-sounding speech  
+- **AI Examples** — Generate examples with Gemini AI by difficulty and context  
+- **Mobile-First Design** — Works great on phone, tablet, or desktop 
+
 ## Related Links
 
 - **Frontend Repository**: [VocaBloom Frontend](https://github.com/aigerimdev/vocabloom-frontend)
