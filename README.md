@@ -3,7 +3,7 @@
 A powerful Django REST API backend for the VocaBloom vocabulary learning application. This API provides comprehensive vocabulary management with AI-powered features including example generation and text-to-speech capabilities.
 
 ## Goal
-Vocabloom is designed for **English learners**, especially those studying English as a second language (ESL).  
+Vocabloom is our capstone project designed for **English learners**, especially those studying English as a second language (ESL).  
 It helps users build and organize their vocabulary with tools that go beyond a basic dictionary.
 
 **Our mission is to transform vocabulary learning from passive memorization into an active, personalized experience.**
@@ -293,17 +293,6 @@ python manage.py migrate
 3. Test your changes with both frontend and backend
 4. Submit pull requests to respective repositories
 
-## Future Enhancements
-
-- Word pronunciation scoring
-- Spaced repetition algorithm
-- Advanced analytics and progress tracking
-- Social features (sharing vocabulary sets)
-- Offline synchronization support
-- Additional language support
-
----
-
 ## Acknowledgments
 
 ### Ada Developers Academy - Cohort 23
@@ -338,3 +327,4 @@ This project reflects Ada's mission to diversify the tech industry by preparing 
 
 **🌱 Experience VocaBloom**: [Try the live app](https://vocabloomapp.netlify.app/) | [View frontend code](https://github.com/aigerimdev/vocabloom-frontend)
 
+---
