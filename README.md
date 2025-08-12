@@ -33,7 +33,7 @@ A powerful Django REST API backend for the VocaBloom vocabulary learning applica
 - **AI Services**: Google Gemini API for example generation
 - **Audio Services**: Amazon Polly for text-to-speech
 - **Documentation**: drf-spectacular (OpenAPI/Swagger/reDoc)
-- **Testing**: Django TestCase with
+- **Testing**: Django TestCase
 - **Deployment**: Render (production)
 - **Cloud Services**: AWS (RDS, Polly)
 
@@ -124,6 +124,18 @@ The production environment uses Amazon RDS PostgreSQL.
 ```
 postgres://username:password@your-rds-endpoint.region.rds.amazonaws.com:5432/database_name
 ```
+## Testing
+
+### Run All Tests
+```bash
+python manage.py test
+```
+
+### Run Specific Test Categories
+```bash
+python manage.py test vocabloom.tests.test_authentication
+python manage.py test vocabloom.tests.test_words
+python manage.py test vocabloom.tests.test_gemini_service
 
 ## API Documentation
 
@@ -175,6 +187,40 @@ POST   /api/words/{word_id}/examples/generate/           # Generate AI example
 #### Audio
 ```
 POST /api/audio/            # Convert text to speech
+```
+
+## Project Structure
+
+```
+vocabloom_backend/
+├── vocabloom_backend/          # Django project settings
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── vocabloom/                  # Main Django app
+│   ├── views/                  # Organized view modules
+│   │   ├── auth_views.py
+│   │   ├── tag_views.py
+│   │   ├── word_views.py
+│   │   ├── user_example_views.py
+│   │   └── audio_views.py
+│   ├── services/               # External service integrations
+│   │   ├── gemini_service.py
+│   │   └── polly_service.py
+│   ├── tests/                  # Test suite
+│   │   ├── test_authentication.py
+│   │   ├── test_tags.py
+│   │   ├── test_words.py
+│   │   ├── test_user_examples.py
+│   │   ├── test_gemini_service.py
+│   │   └── test_polly_service.py
+│   ├── models.py               # Database models
+│   ├── serializers.py          # API serializers
+│   ├── urls.py                 # URL routing
+│   └── admin.py                # Django admin configuration
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
 ## Full Stack Architecture
